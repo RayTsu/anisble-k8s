@@ -1,0 +1,81 @@
+# 创建kubelet,kube-proxy工作目录和cni配置目录
+- name: 创建kube-node 相关目录
+  file: name={{ item }} state=directory
+  with_items:
+  - /var/lib/kubelet
+
+- name: 下载 kubelet,kube-proxy二进制
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ bin_dir }}/{{ item }} mode=0755
+  with_items:
+  - kubelet
+  - kube-proxy
+
+##----------kubelet 配置部分--------------
+# kubelet 启动时向 kube-apiserver.j2 发送 TLS bootstrapping 请求，需要绑定该角色
+# 只需单节点执行一次
+- name: get clusterrolebinding info
+  shell: "{{ bin_dir }}/kubectl get clusterrolebinding --all-namespaces"
+  register: clusterrolebinding_info
+  run_once: true
+  
+- name: kubelet-bootstrap-setting
+  shell: "{{ bin_dir }}/kubectl create clusterrolebinding kubelet-bootstrap \
+        --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap"
+  run_once: True
+  when: '"kubelet-bootstrap" not in clusterrolebinding_info.stdout'
+
+- name: 安装bootstrap.kubeconfig配置文件
+  copy: src=/etc/kubernetes/bootstrap.kubeconfig dest=/etc/kubernetes/bootstrap.kubeconfig  
+
+- name: 创建config配置文件
+  template: src=config.j2 dest=/etc/kubernetes/config
+
+- name: 创建kubelet配置文件
+  template: src=kubelet.j2 dest=/etc/kubernetes/kubelet
+
+- name: 创建proxy配置文件
+  template: src=proxy.j2 dest=/etc/kubernetes/proxy
+
+- name: 分发pod-infrastructure文件，用于pod基础镜像容器文件
+  copy: src=/app/ansible/files/pod-infrastructure.tar dest=/root
+
+- name: 导入基础镜像容器
+  shell: /app/ansible/files/bin/docker load < /root/pod-infrastructure.tar
+
+- name: 创建kubelet的systemd unit文件
+  template: src=kubelet.service.j2 dest=/etc/systemd/system/kubelet.service
+
+- name: 开机启用kubelet 服务
+  shell: systemctl enable kubelet
+  ignore_errors: true
+
+- name: 开启kubelet 服务
+  shell: systemctl daemon-reload && systemctl restart kubelet
+
+##-------kube-proxy部分----------------
+- name: 安装kube-proxy.kubeconfig配置文件
+  copy: src=/etc/kubernetes/kube-proxy.kubeconfig dest=/etc/kubernetes/kube-proxy.kubeconfig
+
+- name: 创建kube-proxy 服务文件
+  template: src=kube-proxy.service.j2 dest=/etc/systemd/system/kube-proxy.service
+
+- name: 开机启用kube-proxy 服务
+  shell: systemctl enable kube-proxy
+  ignore_errors: true
+
+- name: 安装conntrack
+  shell: yum install -y conntrack-tools
+
+- name: 开启kube-proxy 服务
+  shell: systemctl daemon-reload && systemctl restart kube-proxy
+
+# 批准 node 节点，首先轮询等待kubelet启动完成
+- name: 轮询等待kubelet启动
+  shell: "systemctl status kubelet.service|grep Active"
+  register: kubelet_status
+  until: '"running" in kubelet_status.stdout'
+  retries: 8
+  delay: 2
+
+- name: 获取csr 请求信息
+  shell: "sleep 3 && {{ bin_dir }}/kubectl get csr"

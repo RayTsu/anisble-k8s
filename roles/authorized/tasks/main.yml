@@ -1,0 +1,16 @@
+# 设置机器免密码登录
+
+- name: transfer id_rsa.pub to dest client's tmp directory
+  copy: src=/root/.ssh/id_rsa.pub dest=/tmp
+        owner=root mode=0644
+
+- name: mkdir .ssh directory
+  shell: mkdir -p /root/.ssh
+
+- name: mv local id_rsa.pub to local /root/.ssh
+  shell: mv /tmp/id_rsa.pub /root/.ssh/authorized_keys
+  args:
+    creates: /root/authorized_flag
+
+- name: touch authorized_flag
+  shell: touch authorized_flag

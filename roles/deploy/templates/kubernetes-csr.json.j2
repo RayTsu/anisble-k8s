@@ -1,0 +1,35 @@
+{
+  "CN": "kubernetes",
+  "hosts": [
+    "127.0.0.1",
+    "{{ MASTER_IP }}",
+    "{{ NODE_IPS.split(',')[0] }}",
+    "{{ NODE_IPS.split(',')[1] }}",
+    "{{ NODE_IPS.split(',')[2] }}",
+    "{{ NODE_IPS.split(',')[3] }}",
+    "{{ NODE_IPS.split(',')[4] }}",
+    "{{ NODE_IPS.split(',')[5] }}",
+    "{{ NODE_IPS.split(',')[6] }}",
+    "{{ NODE_IPS.split(',')[7] }}",
+    "{{ CLUSTER_KUBERNETES_SVC_IP }}",
+    "{{ REGISTRY_IP }}",
+    "kubernetes",
+    "kubernetes.default",
+    "kubernetes.default.svc",
+    "kubernetes.default.svc.cluster",
+    "kubernetes.default.svc.cluster.local"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "ShenZhen",
+      "L": "ShenZhen",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}

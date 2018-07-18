@@ -1,0 +1,38 @@
+- name: 下载 kube-master 二进制
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ bin_dir }}/{{ item }} mode=0755
+  with_items:
+  - kube-apiserver
+  - kube-controller-manager
+  - kube-scheduler
+
+- name: 创建token.csv文件
+  copy: src=/etc/kubernetes/token.csv dest=/etc/kubernetes/token.csv
+
+- name: 创建kube-apiserver的systemd unit文件
+  template: src=kube-apiserver.service.j2 dest=/etc/systemd/system/kube-apiserver.service
+
+- name: 创建kube-controller-manager的systemd unit文件
+  template: src=kube-controller-manager.service.j2 dest=/etc/systemd/system/kube-controller-manager.service
+
+- name: 创建kube-scheduler的systemd unit文件
+  template: src=kube-scheduler.service.j2 dest=/etc/systemd/system/kube-scheduler.service
+
+- name: 创建apiserver配置文件
+  template: src=apiserver.j2 dest=/etc/kubernetes/apiserver
+
+- name: 创建config配置文件
+  template: src=config.j2 dest=/etc/kubernetes/config
+
+- name: 创建controller-manager配置文件
+  template: src=controller-manager.j2 dest=/etc/kubernetes/controller-manager
+
+- name: 创建scheduler配置文件
+  template: src=scheduler.j2 dest=/etc/kubernetes/scheduler
+
+- name: enable master 服务
+  shell: systemctl enable kube-apiserver kube-controller-manager kube-scheduler
+  ignore_errors: true
+
+- name: 启动 master 服务
+  shell: "systemctl daemon-reload && systemctl restart kube-apiserver && \
+	systemctl restart kube-controller-manager && systemctl restart kube-scheduler"

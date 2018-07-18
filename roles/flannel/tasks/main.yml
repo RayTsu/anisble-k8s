@@ -1,0 +1,42 @@
+- name: 下载flannel相关文件
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ bin_dir }}/{{ item }} mode=0755
+  with_items:
+  - mk-docker-opts.sh
+  - flanneld
+
+- name: 创建flanneld文件
+  template: src=flanneld.j2 dest=/etc/sysconfig/flanneld
+
+- name: 创建flannel的systemd unit文件
+  template: src=flanneld.service.j2 dest=/etc/systemd/system/flanneld.service
+
+- name: 开机启用flannel服务
+  shell: systemctl enable flanneld
+  ignore_errors: true
+
+- stat: path=/etc/systemd/system/etcd.service
+  register: etcd_files
+
+#只有当安装了etcd服务的时候执行
+- name: 执行下面命令为docker分配IP地址段
+  shell: |
+          {{ bin_dir }}/etcdctl --endpoints={{ ETCD_ENDPOINTS }} \
+                         --ca-file={{ ca_dir }}/ca.pem \
+                         --cert-file={{ ca_dir }}/kubernetes.pem \
+                         --key-file={{ ca_dir }}/kubernetes-key.pem \
+                         mkdir /kube-centos/network
+  when: etcd_files.stat.exists == True
+
+#同上
+- name: 指定backend模式
+  shell: |
+          {{ bin_dir }}/etcdctl --endpoints={{ ETCD_ENDPOINTS }} \
+           --ca-file={{ ca_dir }}/ca.pem \
+           --cert-file={{ ca_dir }}/kubernetes.pem \
+           --key-file={{ ca_dir }}/kubernetes-key.pem \
+           mk /kube-centos/network/config '{"Network":"{{ CLUSTER_CIDR }}","SubnetLen":24,"Backend":{"Type":"{{ FLANNEL_BACKEND }}"}}'
+  when: etcd_files.stat.exists == True
+
+
+- name: 开启flannel服务
+  shell: systemctl daemon-reload && systemctl restart flanneld

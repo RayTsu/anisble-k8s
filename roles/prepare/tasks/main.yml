@@ -1,0 +1,40 @@
+- name: prepare some dirs
+  file: name={{ item }} state=directory
+  with_items:
+  - "{{ bin_dir }}"
+  - "{{ ca_dir }}"
+  - /root/.kube
+
+- name: 写入环境变量$PATH 
+  shell: "sed -i '/export PATH=/d' /etc/profile && \
+	echo export PATH={{ bin_dir }}:$PATH >> /etc/profile"
+
+- name: 下载证书工具 CFSSL和 kubectl
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ bin_dir }}/{{ item }} mode=0755
+  with_items:
+  - cfssl
+  - cfssl-certinfo
+  - cfssljson
+  - kubectl
+
+- name: 安装kubeconfig配置文件
+  copy: src=/root/.kube/config dest=/root/.kube/config
+  ignore_errors: true
+
+- name: 分发CA证书
+  copy: src={{ ca_dir }}/{{ item }} dest={{ ca_dir }}/{{ item }} mode=0644
+  with_items:
+  - ca-key.pem
+  - ca.pem
+  - kubernetes-key.pem
+  - kubernetes.pem
+  - kube-proxy.pem
+  - kube-proxy-key.pem
+  - admin.pem
+  - admin-key.pem
+
+- name: 临时关闭 selinux
+  shell: setenforce 0
+
+- name: 关闭防火墙
+  shell: systemctl status firewalld; systemctl disable firewalld

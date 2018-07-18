@@ -1,0 +1,99 @@
+# 部署节点：运行这份 ansible 脚本的节点
+[deploy]
+192.168.11.50
+
+# etcd集群请提供如下NODE_NAME、NODE_IP变量,注意etcd集群必须是1,3,5,7...奇数个节点
+[etcd]
+192.168.10.61 NODE_NAME=etcd1 NODE_IP="192.168.10.61"
+192.168.10.62 NODE_NAME=etcd2 NODE_IP="192.168.10.62"
+192.168.10.64 NODE_NAME=etcd3 NODE_IP="192.168.10.64"
+
+[kube-master]
+192.168.10.61 NODE_IP="192.168.10.61"
+192.168.10.62 NODE_IP="192.168.10.62"
+
+# 负载均衡至少两个节点，安装 keepalived
+[lb]
+192.168.10.61 LB_IF="ens32" LB_ROLE=master SRC_IP="192.168.10.61" PEER_IP="192.168.10.62" # 注意根据实际使用网卡设置 LB_IF变量
+192.168.10.62 LB_IF="ens32" LB_ROLE=backup SRC_IP="192.168.10.62" PEER_IP="192.168.10.61"
+[lb:vars]
+master1="192.168.10.61:6443"	# 根据实际master节点数量设置
+master2="192.168.10.62:6443"
+#master3="192.168.1.x:6443"
+ROUTER_ID=51                    # 取值在0-255之间，区分多个instance的VRRP组播，同网段不能重复
+
+[kube-node]
+192.168.10.61 NODE_IP="192.168.10.61"
+192.168.10.62 NODE_IP="192.168.10.62"
+192.168.10.64 NODE_IP="192.168.10.64"
+192.168.10.66 NODE_IP="192.168.10.66"
+192.168.10.67 NODE_IP="192.168.10.67"
+192.168.10.68 NODE_IP="192.168.10.68"
+192.168.10.69 NODE_IP="192.168.10.69"
+192.168.10.70 NODE_IP="192.168.10.70"
+
+[registry]
+192.168.11.53 NODE_IP="192.168.11.53"
+
+# 预留组，后续添加master节点使用
+[new-master]
+#192.168.1.5 NODE_IP="192.168.1.5"
+
+# 预留组，后续添加node节点使用
+[new-node]
+#192.168.1.xx NODE_IP="192.168.1.xx"
+
+[all:vars]
+# ---------集群主要参数---------------
+#集群部署模式：allinone, single-master, multi-master
+DEPLOY_MODE=multi-master
+
+#集群 MASTER IP即 LB节点VIP地址
+MASTER_IP="192.168.10.72"
+KUBE_APISERVER="https://192.168.10.72:6443"
+
+#TLS Bootstrapping 使用的 Token，使用 head -c 16 /dev/urandom | od -An -t x | tr -d ' ' 生成
+BOOTSTRAP_TOKEN="468bef2491c7d69ffca40803ede6f119"
+
+# 集群网络插件，目前支持calico和flannel
+CLUSTER_NETWORK="flannel"
+
+# 私有仓库地址
+REGISTRY_IP="192.168.11.53"
+
+# flannel backend模式
+FLANNEL_BACKEND="host-gw"
+
+# 服务网段 (Service CIDR），部署前路由不可达，部署后集群内使用 IP:Port 可达
+SERVICE_CIDR="10.68.0.0/16"
+
+# POD 网段 (Cluster CIDR），部署前路由不可达，**部署后**路由可达
+CLUSTER_CIDR="172.20.0.0/16"
+
+# 服务端口范围 (NodePort Range)
+NODE_PORT_RANGE="20000-40000"
+
+# kubernetes 服务 IP (预分配，一般是 SERVICE_CIDR 中第一个IP)
+CLUSTER_KUBERNETES_SVC_IP="10.68.0.1"
+
+# 集群 DNS 服务 IP (从 SERVICE_CIDR 中预分配)
+CLUSTER_DNS_SVC_IP="10.68.0.2"
+
+# etcd 集群间通信的IP和端口, **根据实际 etcd 集群成员设置**
+ETCD_NODES="etcd1=https://192.168.10.61:2380,etcd2=https://192.168.10.62:2380,etcd3=https://192.168.10.64:2380"
+
+# etcd 集群服务地址列表, **根据实际 etcd 集群成员设置**
+ETCD_ENDPOINTS="https://192.168.10.61:2379,https://192.168.10.62:2379,https://192.168.10.64:2379"
+
+#节点ip字符串
+NODE_IPS="192.168.10.61,192.168.10.62,192.168.10.64,192.168.10.66,192.168.10.67,192.168.10.68,192.168.10.69,192.168.10.70"
+
+# ---------附加参数--------------------
+#默认二进制文件目录
+bin_dir="/app/ansible/files/bin"
+
+#证书目录
+ca_dir="/etc/kubernetes/ssl"
+
+#部署目录，即 ansible工具文件存放目录
+base_dir="/app/ansible/files"

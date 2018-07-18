@@ -1,0 +1,24 @@
+- name: 下载etcd二进制文件
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ bin_dir }}/{{ item }} mode=0755
+  with_items:
+  - etcd
+  - etcdctl
+
+- name: 创建etcd配置文件目录
+  file: name=/etc/etcd state=directory
+
+- name: 创建etcd工作目录
+  file: name=/var/lib/etcd state=directory
+
+- name: 创建etcd配置文件
+  template: src=etcd.conf.j2 dest=/etc/etcd/etcd.conf
+
+- name: 创建etcd的systemd unit文件
+  template: src=etcd.service.j2 dest=/etc/systemd/system/etcd.service
+
+- name: 开机启用etcd服务
+  shell: systemctl enable etcd
+  ignore_errors: true
+
+- name: 开启etcd服务
+  shell: systemctl daemon-reload && systemctl restart etcd

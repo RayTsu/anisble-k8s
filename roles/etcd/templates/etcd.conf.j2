@@ -1,0 +1,13 @@
+# [member]
+ETCD_NAME={{NODE_NAME}}
+ETCD_DATA_DIR="/var/lib/etcd"
+ETCD_LISTEN_PEER_URLS="https://{{NODE_IP}}:2380"
+ETCD_LISTEN_CLIENT_URLS="https://{{NODE_IP}}:2379"
+#[cluster]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="https://{{NODE_IP}}:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_ADVERTISE_CLIENT_URLS="https://{{NODE_IP}}:2379"
+ETCDCTL_CA_FILE=/etc/kubernetes/ssl/ca.pem
+ETCDCTL_CERT_FILE=/etc/kubernetes/ssl/kubernetes.pem
+ETCDCTL_KEY_FILE=/etc/kubernetes/ssl/kubernetes-key.pem
+

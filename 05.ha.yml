@@ -1,0 +1,5 @@
+# 单节点master时跳过此步骤
+- hosts:
+  - lb
+  roles:
+  - ha
