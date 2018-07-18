@@ -3,3 +3,6 @@
 # default config should be adequate
 # Add your own!
 KUBE_PROXY_ARGS="--bind-address={{NODE_IP}} --hostname-override={{NODE_IP}} --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig --cluster-cidr={{SERVICE_CIDR}}"
+
+
+# add "--masquerade-all=true --proxy-mode=ipvs" it all depends
