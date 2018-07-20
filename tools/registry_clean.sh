@@ -2,7 +2,7 @@
 nexus_repo_dir=/app/sonatype-work/nexus3/blobs/default/content/directpath/nexus-repository-docker
 docker_name="$1"
 cd $nexus_repo_dir
-for i in `ls |grep -v check`
+for i in `ls -l|grep '^d'|awk '{print $9}'`
 do
   cd $nexus_repo_dir
   cd $i;grep "docker-name=$docker_name" *.properties >/dev/null
