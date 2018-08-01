@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 import os
-import shutil
+
 def endWith(s,*endstring):
     array=map(s.endswith,endstring)
     if True in array:
@@ -28,4 +28,4 @@ for dir1 in vol_files:
                     except IOError,e:
                         print "*** file open error:",e
                     finally:
-                        prop_files.close()                    
+                        prop_files.close()
