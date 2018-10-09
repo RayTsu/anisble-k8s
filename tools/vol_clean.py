@@ -28,4 +28,4 @@ for dir1 in vol_files:
                     except IOError,e:
                         print "*** file open error:",e
                     finally:
-                        prop_files.close()                    
+                        prop_files.close()

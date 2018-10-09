@@ -15,4 +15,3 @@ do
   echo "*********end clean $docker_name***********"
   cd $nexus_repo_dir
 done
-
